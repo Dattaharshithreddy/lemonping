@@ -10,7 +10,13 @@ const axios = require("axios");
 const crypto = require("crypto");
 
 const app = express();
-app.use(express.json());
+
+// Store raw body for signature verification
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf.toString("utf8");
+  }
+}));
 
 // -----------------------------------------------
 //  CONFIG — Replace these with real values
@@ -38,7 +44,7 @@ function verifyLemonSqueezySignature(req) {
 
   const hash = crypto
     .createHmac("sha256", CONFIG.LEMON_WEBHOOK_SECRET)
-    .update(JSON.stringify(req.body))
+    .update(req.rawBody) // Use raw body, not parsed JSON
     .digest("hex");
 
   return hash === signature;
